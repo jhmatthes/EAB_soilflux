@@ -1,0 +1,53 @@
+
+Metadata for study investigating impacts of the Emerald Ash Borer (EAB) on soil CO2 and CH4 flux during May-November 2016-2017 in a mixed deciduous forest in New Hampshire, USA.
+
+Metadata authored by Jaclyn Hatala Matthes, Wellesley College, jmatthes@wellesley.edu
+
+
+This metadata document describes the files:
+
+EAB_SoilFlux_CO2CH4flux.csv
+EAB_SoilFlux_Covariates.csv
+EAB_SoilFlux_TreeHealth.csv
+
+These files correspond to the manuscript: 
+Matthes, J.H., A.K. Lang, F.V. Jevon, S.J. Russell. Tree stress and mortality from emerald ash borer does not systematically alter short-term soil carbon flux in a mixed northeastern U.S. forest. Submitted to Forests, 21 Dec 2017.
+
+
+EAB_SoilFlux_CO2CH4flux.csv 
+Contains the measured soil-atmosphere trace gas measurements that were modeled as CO2 and CH4 flux. The code for processing the raw trace gas measurements into flux values is hosted at: GITHUB
+
+Variables:
+collar_id: replicate identifier for each unique soil collar measured in the experiment
+tree_id: identifier for each unique EAB-impacted tree in the experiment
+year: YYYY of measured flux
+year_month: YYYY-mm of measured flux
+date: YYYY-mm-dd of measured flux
+CO2_flux_umolm-2s-1: measured CO2 flux in micro moles of carbon per m^2 per s^1 
+CH4_flux_umolm-2s-1: measured CH4 flux in micro moles of carbon per m^2 per s^1 
+soil_temp_C: soil temperature in celsius, measured at 10cm soil depth at the time of flux measurement
+soil_moisture_vol: volumetric soil water content (m^3 m^-3) measured with a time domain reflectometry probe at either 10cm (2016) or 12cm (2017) depth at the time of flux measurement
+
+
+EAB_SoilFlux_Covariates.csv
+Contains the soil covariates measured after harvesting the soil core within the measurement collar at the conclusion of the experiment (October 2017). 
+
+Variables:
+collar_id: replicate identifier for each unique soil collar measured in the experiment
+pH: soil pH measured with a 2:1 distilled water dilution 
+root biomass_g: total dry biomass of roots > 1mm collected through sieving and dried in a 45C oven for 72 hours
+clay_frac: fraction soil clay content (<0.002 mm) for a 2mL subsample of the soil mineral fraction measured on a laser diffraction particle size analyzer
+silt_frac: fraction soil clay content (0.002-0.05 mm) for a 2mL subsample of the soil mineral fraction measured on a laser diffraction particle size analyzer
+sand_frac: fraction soil clay content (0.05-2 mm) for a 2mL subsample of the soil mineral fraction measured on a laser diffraction particle size analyzer
+
+
+EAB_SoilFlux_TreeHealth.csv
+Contains the EAB status classes for trees in the study measured in July 2016 and 2017, with DBH measured in 2016.
+
+Variables:
+collar_id: replicate identifier for each unique soil collar measured in the experiment
+tree_id: identifier for each unique EAB-impacted tree in the experiment
+year: YYYY of survey
+status: healthy, impacted by EAB, or dead by EAB
+dbh: stem diameter at 1.3 m from the ground surface in cm
+condition: transition classes for the tree from 2016 to 2017, where H-I is healthy to impacted, I-I is staying impacted, I-D is impacted to dead, and D-D is dead from the start of the experiment
