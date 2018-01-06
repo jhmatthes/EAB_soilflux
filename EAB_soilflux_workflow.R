@@ -77,14 +77,18 @@ climatology_dat <- read_csv("input/climate_NOAA/ConcordAirport_19812010.csv") %>
   mutate(year = year(DATE),
          fmonth = format(DATE, "%Y-%m"),
          month = month(DATE),
-         TMEAN = (TMAX + TMIN)/2) %>%
-  filter(year > 1980 & year <= 2010)
+         TMEAN_C = ((TMAX + TMIN)/2 - 32)*(5/9),
+         PRCP_cm = PRCP*2.54) %>%
+  filter(year > 1980 & year <= 2010) %>%
+  select(DATE, year, fmonth, month, TMEAN_C, PRCP_cm)
 
 # 30-year mean annual temperature and mean annual precipitation
 climatology_ann <- climatology_dat %>%
   group_by(year) %>%
-  summarize(t_mean = mean(TMEAN, na.rm=TRUE), t_miss = sum(is.na(TMEAN)),
-            p_sum = sum(PRCP*2.54, na.rm=TRUE), p_miss = sum(is.na(PRCP))) %>%
+  summarize(t_mean = mean(TMEAN_C, na.rm=TRUE), 
+            t_miss = sum(is.na(TMEAN_C)),
+            p_sum = sum(PRCP_cm, na.rm=TRUE), 
+            p_miss = sum(is.na(PRCP_cm))) %>%
   filter(t_miss < 1, p_miss < 1) %>%
   summarize(t30 = mean(t_mean), tsd = sd(t_mean),
             p30 = mean(p_sum)*10, psd = sd(p_sum)*10)
@@ -92,10 +96,10 @@ climatology_ann <- climatology_dat %>%
 # 30-year monthly mean temp & total rainfall: May - November
 mon_climdat <- climatology_dat %>% 
   group_by(fmonth, month, year) %>%
-  summarize(monthly_rain = sum(PRCP*2.54, na.rm=TRUE),
-            monthly_temp = mean((TMEAN-32)*(5/9), na.rm=TRUE),
-            rain_miss = sum(is.na(PRCP)),
-            temp_miss = sum(is.na(TMEAN))) %>%
+  summarize(monthly_rain = sum(PRCP_cm, na.rm=TRUE),
+            monthly_temp = mean(TMEAN_C, na.rm=TRUE),
+            rain_miss = sum(is.na(PRCP_cm)),
+            temp_miss = sum(is.na(TMEAN_C))) %>%
   filter(rain_miss < 1, temp_miss < 1, month >= 5 & month <= 11) 
 
 # Weather data that overlaps experiment period
@@ -103,24 +107,29 @@ exp_dat <- read_csv("input/climate_NOAA/ConcordAirport_1517.csv") %>%
   mutate(year = year(DATE),
          fmonth = format(DATE, "%Y-%m"),
          month = month(DATE),
-         TMEAN = (TMAX + TMIN)/2) %>%
+         TMEAN_C = ((TMAX + TMIN)/2 - 32)*(5/9),
+         PRCP_cm = PRCP*2.54) %>%
   filter(month >= 5 & month <= 11, year > 2015) %>%
+  select(DATE, year, month, fmonth, TMEAN_C, PRCP_cm)
+
+month_dat <- exp_dat %>%
   group_by(fmonth, month, year) %>%
-  summarize(precip = sum(PRCP*2.54, na.rm=TRUE),
-            monthly_temp = mean((TMEAN-32)*(5/9), na.rm=TRUE),
-            monthly_temp_sd = sd((TMEAN-32)*(5/9), na.rm=TRUE))
+  summarize(precip = sum(PRCP_cm, na.rm=TRUE),
+            monthly_temp = mean(TMEAN_C, na.rm=TRUE),
+            monthly_temp_sd = sd(TMEAN_C, na.rm=TRUE))
 
 # Join monthly precip to flux data
 flux_all_2 <- left_join(flux_all, 
-                        exp_dat, by = "fmonth")
+                        month_dat, by = "fmonth")
 
 # Plot 2016 & 2017 monthly temperature & monthly precip on 30-year climatology
 fig3a <- ggplot(mon_climdat, aes(x = factor(month), y = monthly_temp)) + 
   geom_boxplot() +
   labs(x = "", y = "Monthly Mean Temperature [C]") + 
   scale_x_discrete(labels = c("May", "June", "July", "Aug", "Sep", "Oct", "Nov")) +
-  geom_point(data = exp_dat, aes(x = as.factor(month), 
-                                 y = monthly_temp, color = as.factor(year)), 
+  geom_point(data = month_dat, 
+             aes(x = as.factor(month), y = monthly_temp, 
+                 color = as.factor(year)), 
              shape = 17, size = 3) +
   scale_color_brewer(palette = "Set1") +
   labs(color = "Year") +
@@ -207,7 +216,7 @@ dev.off()
 # Model Set 1: Does EAB status impact soil microclimate?
 # Two mixed effects models: Soil Moisture, Soil Temperature
 ################################################################
-stan_iter <- 100000 # number of MCMC iterations within each model
+stan_iter <- 2000 # number of MCMC iterations within each model
 
 # Model 1a: Soil Moisture Mixed Effects model 
 # SM_i = rain_i + sand_i + collar_i + status_i
@@ -215,13 +224,15 @@ SM_full_data_Stan <- flux_all_2 %>%
   filter(!is.na(Soil.Moisture))
 
 SM_full_data <- list(collar = as.integer(factor(flux_all_2$fid)),
-                      status = as.integer(factor(flux_all_2$status)),
-                      sm = flux_all_2$Soil.Moisture,
-                      rain = flux_all_2$precip,
-                      sand = flux_all_2$sand_frac,
-                      N = nrow(flux_all_2),
-                      C = length(unique(flux_all_2$fid)),
-                      S = length(unique(flux_all_2$status)))
+                     status = as.integer(factor(flux_all_2$status)),
+                     month = as.integer(factor(flux_all_2$fmonthny)),
+                     sm = flux_all_2$Soil.Moisture,
+                     rain = flux_all_2$precip,
+                     sand = flux_all_2$sand_frac,
+                     N = nrow(flux_all_2),
+                     C = length(unique(flux_all_2$fid)),
+                     M = length(unique(flux_all_2$fmonthny)),
+                     S = length(unique(flux_all_2$status)))
 
 SM_fullmodel <- stan(file = "R/stan/AshSM_CollarStatus.stan", 
                      data = SM_full_data, 

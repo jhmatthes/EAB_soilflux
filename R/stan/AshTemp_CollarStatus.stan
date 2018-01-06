@@ -19,15 +19,15 @@ parameters {
   real<lower=0> sigma_e;     //error sd
   real<lower=0> sigma_c;     //collar sd
   real<lower=0> sigma_s;     //status sd
-  real<lower=0> sigma_m;     //status sd
+  real<lower=0> sigma_m;     //month sd
 }
 
 model {
   real mu;
   //priors
   collar_int ~ normal(0,sigma_c);   //collar random effects
-  status_int ~ normal(0,sigma_s);    //status random effects
-  month_int ~ normal(0,sigma_m);    //status random effects
+  status_int ~ normal(0,sigma_s);   //status random effects
+  month_int ~ normal(0,sigma_m);    //month random effects
 
   // likelihood
   for (i in 1:N){
